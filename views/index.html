@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Personal Library</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+    h1 { color: #333; }
+    form { margin-bottom: 20px; }
+    input, button { padding: 8px; margin: 5px 0; }
+    button { cursor: pointer; }
+    #books { margin-top: 20px; }
+    .book { border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+  <h1>Personal Library</h1>
+  
+  <form id="addBookForm">
+    <h2>Add a Book</h2>
+    <input type="text" id="title" placeholder="Book Title" required>
+    <button type="submit">Add Book</button>
+  </form>
+  
+  <form id="addCommentForm">
+    <h2>Add a Comment</h2>
+    <input type="text" id="bookId" placeholder="Book ID" required>
+    <input type="text" id="comment" placeholder="Your Comment" required>
+    <button type="submit">Add Comment</button>
+  </form>
+  
+  <div id="books"></div>
+  
+  <script>
+    // 前端交互逻辑
+    document.getElementById('addBookForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const title = document.getElementById('title').value;
+      
+      const response = await fetch('/api/books', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title })
+      });
+      
+      const data = await response.json();
+      alert(`Book added with ID: ${data._id}`);
+      loadBooks();
+    });
+    
+    document.getElementById('addCommentForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const bookId = document.getElementById('bookId').value;
+      const comment = document.getElementById('comment').value;
+      
+      const response = await fetch(`/api/books/${bookId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ comment })
+      });
+      
+      const data = await response.json();
+      alert('Comment added successfully!');
+      loadBooks();
+    });
+    
+    async function loadBooks() {
+      const response = await fetch('/api/books');
+      const books = await response.json();
+      
+      const booksContainer = document.getElementById('books');
+      booksContainer.innerHTML = '<h2>Book List</h2>';
+      
+      books.forEach(book => {
+        const bookDiv = document.createElement('div');
+        bookDiv.className = 'book';
+        bookDiv.innerHTML = `
+          <h3>${book.title}</h3>
+          <p>ID: ${book._id}</p>
+          <p>Comments: ${book.commentcount || 0}</p>
+          <button onclick="deleteBook('${book._id}')">Delete</button>
+        `;
+        booksContainer.appendChild(bookDiv);
+      });
+    }
+    
+    async function deleteBook(id) {
+      await fetch(`/api/books/${id}`, { method: 'DELETE' });
+      loadBooks();
+    }
+    
+    // 初始加载
+    loadBooks();
+  </script>
+</body>
+</html>
